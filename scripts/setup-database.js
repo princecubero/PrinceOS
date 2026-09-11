@@ -1,6 +1,5 @@
 require('dotenv').config();
-const fs = require('fs');
-const path = require('path');
+const initialize = require('../database/initialize');
 const { Client } = require('pg');
 
 async function setup() {
@@ -20,9 +19,7 @@ async function setup() {
 
   const database = new Client({ connectionString: targetUrl.toString(), ssl });
   await database.connect();
-  await database.query(fs.readFileSync(path.join(__dirname, '..', 'database', 'schema.sql'), 'utf8'));
-  await database.query(`INSERT INTO users (id, email, display_name) VALUES ($1, $2, $3)
-    ON CONFLICT (id) DO UPDATE SET updated_at = NOW()`, ['demo-user', 'demo@princeos.local', 'Prince']);
+  await initialize(database);
   const tables = await database.query("SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename");
   await database.end();
   console.log(`Database "${databaseName}" is ready.`);
