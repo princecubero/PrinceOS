@@ -1,0 +1,645 @@
+/* Workspace pages: shared editing controls, distinct layouts per module. */
+.workspace-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 22px;
+}
+.workspace-tools input {
+  flex: 1;
+  min-width: 180px;
+}
+.workspace-tools select {
+  width: auto;
+}
+.workspace-tools input,
+.workspace-tools select,
+.task-card select,
+.workspace-form input,
+.workspace-form select,
+.workspace-form textarea {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 11px 12px;
+  background: #fff;
+  color: var(--ink);
+  font: 14px Arial, sans-serif;
+  max-width: 100%;
+}
+.workspace-tools input:focus,
+.workspace-tools select:focus,
+.workspace-form input:focus,
+.workspace-form select:focus,
+.workspace-form textarea:focus {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.outline-button,
+.danger-button {
+  padding: 9px 13px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font: 12px Arial, sans-serif;
+  background: #fff;
+  color: var(--green);
+}
+.danger-button {
+  background: #a23d2f;
+  color: white;
+  border-color: #a23d2f;
+}
+.workspace-empty {
+  padding: 45px 24px;
+  text-align: center;
+  background: #fff;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  color: var(--muted);
+}
+.workspace-empty > span {
+  display: block;
+  font-size: 28px;
+  color: var(--green);
+}
+.workspace-empty p {
+  margin: 12px 0 18px;
+}
+.record-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.record-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font: 11px Arial, sans-serif;
+  color: var(--muted);
+}
+.tag {
+  display: inline-block;
+  background: var(--green-soft);
+  color: var(--green);
+  font: 11px Arial, sans-serif;
+  padding: 5px 8px;
+  border-radius: 5px;
+  overflow-wrap: anywhere;
+}
+.priority-High {
+  background: #fbe9e3;
+  color: #a23d2f;
+}
+.priority-Low {
+  background: #f2f1eb;
+  color: #77735d;
+}
+.record-copy {
+  font: 14px/1.7 Arial, sans-serif;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #66746c;
+  margin: 12px 0;
+}
+.record-date {
+  font: 12px/1.6 Arial, sans-serif;
+  color: var(--muted);
+  margin: 12px 0;
+}
+.overdue {
+  font: 12px Arial, sans-serif;
+  color: #a23d2f;
+  margin: 12px 0;
+}
+.workspace-meter {
+  height: 7px;
+  border-radius: 8px;
+  background: var(--green-soft);
+  overflow: hidden;
+}
+.workspace-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  border-radius: 8px;
+  transition: width 0.2s;
+}
+.workspace-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  width: min(640px, calc(100% - 32px));
+  max-height: 90vh;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 20px 80px #112a2433;
+}
+.workspace-dialog::backdrop {
+  background: #172c2266;
+  backdrop-filter: blur(3px);
+}
+.workspace-dialog-body {
+  padding: 28px;
+}
+.workspace-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.workspace-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font: 12px Arial, sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.workspace-form label > span {
+  display: none;
+}
+.workspace-form .wide-field {
+  grid-column: 1/-1;
+}
+.workspace-form textarea {
+  resize: vertical;
+  line-height: 1.7;
+}
+.workspace-dialog .form-actions {
+  margin-top: 24px;
+}
+.workspace-dialog .modal-head {
+  margin-bottom: 24px;
+}
+.task-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.task-lane {
+  background: #eef1eb;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  min-height: 310px;
+}
+.task-lane > h2 {
+  display: flex;
+  justify-content: space-between;
+  font-size: 17px;
+  margin: 0 0 20px;
+}
+.task-lane > h2 span {
+  font: 12px Arial, sans-serif;
+  background: #fff;
+  padding: 4px 8px;
+  border-radius: 20px;
+}
+.lane-doing {
+  background: #f4f0e7;
+}
+.lane-done {
+  background: #eaf2ed;
+}
+.task-card {
+  padding: 18px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+.task-card h3 {
+  font-size: 18px;
+  line-height: 1.4;
+  margin: 14px 0 8px;
+  overflow-wrap: anywhere;
+}
+.task-card select {
+  width: 100%;
+  margin: 8px 0 16px;
+}
+.lane-empty {
+  font: 13px/1.6 Arial, sans-serif;
+  color: var(--muted);
+  padding: 16px 0;
+}
+.goal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+.goal-card {
+  padding: 28px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  border-top: 4px solid var(--green);
+}
+.goal-card h2 {
+  font-size: 24px;
+  margin: 22px 0 8px;
+  overflow-wrap: anywhere;
+}
+.goal-number {
+  font-size: 56px;
+  margin: 20px 0 14px;
+  color: var(--green);
+}
+.goal-number small {
+  font-size: 23px;
+  margin-left: 5px;
+}
+.goal-card .record-actions {
+  margin-top: 20px;
+}
+.habit-scroll {
+  overflow-x: auto;
+}
+.habit-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 780px;
+  font: 13px Arial, sans-serif;
+}
+.habit-table th,
+.habit-table td {
+  padding: 18px 10px;
+  text-align: center;
+  border-top: 1px solid var(--line);
+}
+.habit-table th:first-child {
+  text-align: left;
+  padding-left: 24px;
+  min-width: 200px;
+  max-width: 300px;
+  overflow-wrap: anywhere;
+}
+.habit-table th small,
+.habit-table td small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-top: 7px;
+}
+.habit-table thead th {
+  font-weight: 400;
+  color: var(--muted);
+}
+.habit-check {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  background: #f6f7f3;
+  font-size: 20px;
+}
+.habit-check.checked {
+  color: #fff;
+  background: var(--green);
+  border-color: var(--green);
+}
+.history-controls {
+  display: flex;
+  gap: 7px;
+}
+.habit-panel .panel-header {
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.habit-table .record-actions {
+  justify-content: center;
+}
+.fitness-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.8fr) minmax(0, 1.4fr);
+  gap: 22px;
+  align-items: start;
+}
+.movement-chart {
+  height: 220px;
+  display: flex;
+  gap: 12px;
+  padding: 15px 24px 0;
+  align-items: stretch;
+}
+.movement-column {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  font: 11px Arial, sans-serif;
+  color: var(--muted);
+}
+.movement-track {
+  height: 145px;
+  width: 100%;
+  max-width: 30px;
+  background: #f1f4ef;
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+.movement-track > div {
+  background: var(--green);
+  width: 100%;
+  border-radius: 6px;
+}
+.chart-footnote {
+  padding: 0 24px 24px;
+  font: 12px/1.7 Arial, sans-serif;
+  color: var(--muted);
+}
+.workout-list {
+  display: grid;
+  gap: 14px;
+}
+.workout-card {
+  display: flex;
+  gap: 18px;
+  background: white;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.workout-date {
+  min-width: 65px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border-right: 1px solid var(--line);
+  padding-right: 16px;
+}
+.workout-date strong {
+  font-size: 30px;
+  font-weight: 400;
+  color: var(--green);
+}
+.workout-date small {
+  font: 10px Arial, sans-serif;
+  color: var(--muted);
+  text-align: center;
+}
+.workout-content {
+  flex: 1;
+  min-width: 0;
+}
+.workout-content h2 {
+  font-size: 20px;
+  margin: 14px 0;
+  overflow-wrap: anywhere;
+}
+.workout-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.notes-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.note-index {
+  display: grid;
+  gap: 10px;
+  max-height: 75vh;
+  overflow: auto;
+}
+.note-preview {
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  background: #fff;
+  color: var(--ink);
+}
+.note-preview.selected {
+  border-color: var(--green);
+  background: #edf4ed;
+  box-shadow: inset 3px 0 var(--green);
+}
+.note-preview strong {
+  display: block;
+  margin: 12px 0 8px;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+.note-preview p {
+  font: 12px/1.7 Arial, sans-serif;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.note-preview small {
+  font: 10px Arial, sans-serif;
+  color: var(--muted);
+  display: block;
+  margin-top: 14px;
+}
+.note-paper {
+  min-height: 550px;
+  background: #fffefa;
+  border: 1px solid #e8e5d8;
+  border-radius: 14px;
+  padding: 36px;
+  min-width: 0;
+}
+.note-paper h2 {
+  font-size: 32px;
+  margin: 30px 0 20px;
+  overflow-wrap: anywhere;
+}
+.note-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.note-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 15px/1.9 Arial, sans-serif;
+  margin: 26px 0;
+  min-height: 240px;
+}
+.note-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  font: 11px Arial, sans-serif;
+  color: var(--muted);
+}
+.note-placeholder {
+  padding: 90px 0;
+  text-align: center;
+  color: var(--muted);
+}
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+.analytics-card {
+  padding: 28px;
+  min-width: 0;
+}
+.analytics-card h2 {
+  font-size: 23px;
+  margin: 22px 0;
+}
+.analytics-row {
+  margin: 22px 0;
+}
+.analytics-row > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font: 13px Arial, sans-serif;
+  margin-bottom: 10px;
+  overflow-wrap: anywhere;
+}
+.analytics-row span {
+  color: var(--muted);
+  white-space: nowrap;
+}
+.finance-insight {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 15px;
+}
+.finance-insight strong {
+  font-weight: 400;
+}
+.insight-link {
+  display: block;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+  color: var(--green);
+  text-decoration: none;
+}
+.insight-link strong,
+.insight-link span {
+  display: block;
+}
+.insight-link span {
+  font: 12px/1.7 Arial, sans-serif;
+  color: var(--muted);
+  margin-top: 7px;
+}
+.range-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font: 13px Arial, sans-serif;
+}
+@media (max-width: 1100px) {
+  .task-board {
+    gap: 10px;
+  }
+  .task-lane {
+    padding: 12px;
+  }
+  .fitness-layout {
+    grid-template-columns: 1fr;
+  }
+  .notes-layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .task-board,
+  .goal-grid,
+  .analytics-grid,
+  .notes-layout {
+    grid-template-columns: 1fr;
+  }
+  .note-index {
+    max-height: 300px;
+  }
+  .note-paper {
+    padding: 24px;
+    min-height: 400px;
+  }
+  .workspace-form {
+    grid-template-columns: 1fr;
+  }
+  .workspace-dialog-body {
+    padding: 22px;
+  }
+  .workspace-tools > input,
+  .workspace-tools > select {
+    width: 100%;
+  }
+  .task-lane {
+    min-height: 180px;
+  }
+  .goal-card,
+  .analytics-card {
+    padding: 22px;
+  }
+  .workout-card {
+    padding: 16px;
+    gap: 12px;
+  }
+  .range-label {
+    flex-wrap: wrap;
+  }
+  .habit-panel .panel-header {
+    padding: 20px;
+  }
+  .record-actions {
+    gap: 12px;
+  }
+  .finance-insight {
+    flex-wrap: wrap;
+  }
+  .note-footer {
+    gap: 15px;
+  }
+}
+
+@media (max-width: 620px) {
+  .sidebar > div:nth-child(2) {
+    min-width: 0;
+    overflow-x: auto;
+  }
+  .sidebar .brand {
+    flex-shrink: 0;
+  }
+  .sidebar .nav {
+    width: max-content;
+  }
+  .topbar > .primary-button {
+    margin-top: 16px;
+  }
+}

@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Route, Routes, useNavigate } from 'react-router-dom';
 
+import { TasksPage, GoalsPage, HabitsPage, FitnessPage, NotesPage, AnalyticsPage } from './WorkspacePages';
+import { goalProgress, habitDates, localDate } from './workspace-model';
+
 const modules = [
   ['/', '⌂', 'Dashboard'], ['/calendar', '□', 'Calendar'], ['/finance', '$', 'Finance'],
   ['/fitness', '↗', 'Fitness'], ['/goals', '◎', 'Goals'], ['/habits', '♨', 'Habits'],
@@ -38,7 +41,7 @@ function Shell({ children }) {
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark">P</div><div className="brand-text">PrinceOS<small>Your life. One system.</small></div></div>
       <div><p className="nav-label">Modules</p><nav className="nav" aria-label="Main navigation">
-        {modules.map(([path, icon, name]) => <NavLink key={path} to={path} end={path === '/'}><span className="nav-icon">{icon}</span><span>{name}</span></NavLink>)}
+        {modules.map(([path, icon, name]) => <NavLink key={path} to={path} aria-label={name} title={name} end={path === '/'}><span className="nav-icon" aria-hidden="true">{icon}</span><span>{name}</span></NavLink>)}
       </nav></div>
       <div className="side-note"><strong>Your life, organized</strong>One calm place for what matters today.</div>
     </aside>
@@ -61,15 +64,15 @@ function Dashboard({ data }) {
   const expenses = data.transactions.filter(t => t.type === 'expense').reduce((sum, transaction) => sum + Number(transaction.amount), 0);
   const spendingBalance = spendingFunds - expenses;
   const openTasks = data.tasks.filter(t => !t.done).length;
-  const completedHabits = data.habits.filter(h => h.done).length;
+  const completedHabits = data.habits.filter(h => habitDates(h).includes(localDate())).length;
   const upcoming = Object.entries(data.events).flatMap(([date, items]) => items.map(item => ({ date, ...item }))).filter(item => `${item.date}T${item.time}` >= `${dateKey(new Date())}T${new Date().toTimeString().slice(0, 5)}`).sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).slice(0, 3);
   return <><Header eyebrow={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })} title="Your dashboard" subtitle="Here is the shape of your day and your progress." />
-    <section className="stats"><Stat label="Spending money" value={money(spendingBalance)} note={`${money(expenses)} spent`} /><Stat label="Open tasks" value={openTasks} note={`${data.tasks.length - openTasks} completed`} /><Stat label="Habit completion" value={`${completedHabits}/${data.habits.length}`} note="Recorded habits" /><Stat label="Active goals" value={data.goals.length} note="Across life and work" /></section>
+    <section className="stats"><Stat label="Spending money" value={money(spendingBalance)} note={`${money(expenses)} spent`} /><Stat label="Open tasks" value={openTasks} note={`${data.tasks.length - openTasks} completed`} /><Stat label="Habit completion" value={`${completedHabits}/${data.habits.length}`} note="Checked in today" /><Stat label="Active goals" value={data.goals.filter(goal => goalProgress(goal) < 100).length} note="Across life and work" /></section>
     <div className="summary-grid">
       <Card title="Upcoming agenda" subtitle="Upcoming events" action={<button className="small-link" onClick={() => navigate('/calendar')}>Calendar →</button>}>{!upcoming.length && <p className="muted-copy">No upcoming events. Add an event in Calendar.</p>}{upcoming.map(item => <div className="summary-line" key={item.id}><span><strong>{item.title}</strong><small>{item.date}</small></span><b>{item.time}</b></div>)}</Card>
       <Card title="Tasks" subtitle="What needs attention" action={<button className="small-link" onClick={() => navigate('/tasks')}>View all →</button>}>{!data.tasks.length && <p className="muted-copy">No tasks yet. Add your first task.</p>}{data.tasks.slice(0, 3).map(item => <div className="summary-line" key={item.id}><span><strong className={item.done ? 'completed' : ''}>{item.title}</strong><small>{item.detail}</small></span><b>{item.done ? 'Done' : 'Open'}</b></div>)}</Card>
       <Card title="Financial snapshot" subtitle="Separate money buckets"><div className="metric-pair"><span><small>Spending money</small><strong>{money(spendingBalance)}</strong></span><span><small>Savings</small><strong>{money(savings)}</strong></span></div><p className="muted-copy">Total money: {money(spendingBalance + savings)}. Expenses only reduce spending money.</p></Card>
-      <Card title="Goals & habits" subtitle="Your momentum">{!data.goals.length && <p className="muted-copy">No goals yet. Add your first goal.</p>}{data.goals.slice(0, 2).map(goal => <div className="goal-row" key={goal.id}><div><strong>{goal.title}</strong><span>{goal.progress}%</span></div><Progress value={goal.progress} /></div>)}</Card>
+      <Card title="Goals & habits" subtitle="Your momentum">{!data.goals.length && <p className="muted-copy">No goals yet. Add your first goal.</p>}{data.goals.slice(0, 2).map(goal => <div className="goal-row" key={goal.id}><div><strong>{goal.title}</strong><span>{Math.round(goalProgress(goal))}%</span></div><Progress value={goalProgress(goal)} /></div>)}</Card>
     </div></>;
 }
 
@@ -124,20 +127,6 @@ function FinancePage({ transactions, updateTransactions }) {
     </Card>
     {editing && <div className="modal-backdrop open"><div className="modal"><div className="modal-head"><h2>{editing.id ? 'Edit transaction' : 'Add transaction'}</h2><button className="close" onClick={closeEditor} aria-label="Close">×</button></div><form onSubmit={submit} key={editing.id || 'new'}><div className="form-grid"><label>Name<input name="name" required defaultValue={editing.name || ''} /></label><label>Amount<input name="amount" type="number" min="0.01" step="0.01" required defaultValue={editing.amount || ''} /></label><label>Type<select name="type" defaultValue={['spending', 'expense', 'savings'].includes(editing.type) ? editing.type : 'spending'}><option value="spending">Spending money</option><option value="expense">Expense</option><option value="savings">Savings</option></select></label><label>Notes <span className="optional-label">Optional</span><textarea name="notes" rows="3" defaultValue={editing.notes || editing.category || ''} /></label></div><div className="form-actions"><button type="button" className="cancel" onClick={closeEditor}>Cancel</button><button className="primary-button">{editing.id ? 'Save changes' : 'Add transaction'}</button></div></form></div></div>}
   </>;
-}
-
-function CollectionPage({ type, title, subtitle, items, updateItems }) {
-  const [adding, setAdding] = useState(false);
-  const labels = { tasks: 'task', habits: 'habit', goals: 'goal', fitness: 'workout', notes: 'note' };
-  const add = e => { e.preventDefault(); const form = new FormData(e.currentTarget); const progress = type === 'goals' ? Number(form.get('progress')) : undefined; updateItems(all => [...all, { id: Date.now(), title: form.get('title').trim(), detail: form.get('detail').trim(), done: false, progress }]); setAdding(false); };
-  const toggle = id => updateItems(all => all.map(item => item.id === id ? { ...item, done: !item.done } : item));
-  const remove = id => updateItems(all => all.filter(item => item.id !== id));
-  return <><Header title={title} subtitle={subtitle}><button className="primary-button" onClick={() => setAdding(true)}>+ Add {labels[type]}</button></Header><div className="module-grid"><Card title={`${title} overview`} subtitle={`${items.length} recorded`}><div className="large-metric">{type === 'goals' ? `${Math.round(items.reduce((s, x) => s + x.progress, 0) / Math.max(items.length, 1))}%` : items.filter(x => x.done).length}</div><p className="muted-copy">{type === 'goals' ? 'Average progress' : 'Completed entries'}</p></Card><Card title={`All ${title.toLowerCase()}`} subtitle="Add, update, and remove entries">{!items.length && <p className="muted-copy">No {title.toLowerCase()} yet. Add your first {labels[type]}.</p>}{items.map(item => <div className="collection-row" key={item.id}>{type !== 'goals' && type !== 'notes' && <button className={`check-button ${item.done ? 'done' : ''}`} onClick={() => toggle(item.id)} aria-label={`Toggle ${item.title}`}>{item.done ? '✓' : ''}</button>}<div><strong className={item.done ? 'completed' : ''}>{item.title}</strong><span>{item.detail}</span>{type === 'goals' && <Progress value={item.progress} />}</div><button className="small-link delete-event" onClick={() => remove(item.id)}>Delete</button></div>)}</Card></div>{adding && <div className="modal-backdrop open"><div className="modal"><div className="modal-head"><h2>Add {labels[type]}</h2><button className="close" onClick={() => setAdding(false)}>×</button></div><form onSubmit={add}><div className="form-grid"><label>Title<input name="title" required /></label><label>Details<input name="detail" required /></label>{type === 'goals' && <label>Progress %<input name="progress" type="number" min="0" max="100" defaultValue="0" /></label>}</div><div className="form-actions"><button className="primary-button">Save</button></div></form></div></div>}</>;
-}
-
-function Analytics({ data }) {
-  const cards = [['Habit consistency', data.habits.filter(x => x.done).length / Math.max(data.habits.length, 1) * 100, 'Recorded habit completion'], ['Goal progress', data.goals.reduce((s, x) => s + x.progress, 0) / Math.max(data.goals.length, 1), 'Average across goals'], ['Task completion', data.tasks.filter(x => x.done).length / Math.max(data.tasks.length, 1) * 100, 'All tracked tasks']];
-  return <><Header title="Analytics" subtitle="Trends across finance, fitness, productivity, habits, and goals." /><div className="summary-grid">{cards.map(([title, value, note]) => <Card key={title} title={title} subtitle={note}><div className="large-metric">{Math.round(value)}%</div><Progress value={value} /><p className="muted-copy">Updated from your PrinceOS data.</p></Card>)}</div></>;
 }
 
 export default function App() {
@@ -202,12 +191,12 @@ export default function App() {
     <Route path="/" element={<Dashboard data={data} />} />
     <Route path="/calendar" element={<CalendarPage events={data.events} updateEvents={value => update('events', value)} />} />
     <Route path="/finance" element={<FinancePage transactions={data.transactions} updateTransactions={value => update('transactions', value)} />} />
-    <Route path="/fitness" element={<CollectionPage type="fitness" title="Fitness" subtitle="Record workouts and mark them complete." {...collectionProps('fitness')} />} />
-    <Route path="/goals" element={<CollectionPage type="goals" title="Goals" subtitle="Turn long-term ambitions into measurable milestones." {...collectionProps('goals')} />} />
-    <Route path="/habits" element={<CollectionPage type="habits" title="Habits" subtitle="Record habits and track completion." {...collectionProps('habits')} />} />
-    <Route path="/tasks" element={<CollectionPage type="tasks" title="Tasks" subtitle="Record tasks and track completion." {...collectionProps('tasks')} />} />
-    <Route path="/notes" element={<CollectionPage type="notes" title="Notes" subtitle="Capture ideas, reflections, and useful details." {...collectionProps('notes')} />} />
-    <Route path="/analytics" element={<Analytics data={data} />} />
+    <Route path="/fitness" element={<FitnessPage {...collectionProps('fitness')} />} />
+    <Route path="/goals" element={<GoalsPage {...collectionProps('goals')} />} />
+    <Route path="/habits" element={<HabitsPage {...collectionProps('habits')} />} />
+    <Route path="/tasks" element={<TasksPage {...collectionProps('tasks')} />} />
+    <Route path="/notes" element={<NotesPage {...collectionProps('notes')} />} />
+    <Route path="/analytics" element={<AnalyticsPage data={data} />} />
     <Route path="*" element={<Dashboard data={data} />} />
   </Routes></Shell>;
 }

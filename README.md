@@ -164,3 +164,24 @@ The login session lasts 30 days. Use **Sign out** when using a shared device. Pr
 ## Finance behavior
 
 PrinceOS displays money in Philippine pesos (`PHP`). Transactions can add `spending` money, record an `expense`, or add `savings`, with an optional note. Spending money is calculated as additions minus expenses. Savings is a separate balance, so expenses never reduce it. Total money combines the current spending-money balance with savings. Hover over a transaction, focus it with the keyboard, or view it on a touch device to reveal its **Edit** button. The database migration converts earlier `income` entries to `savings` and preserves an earlier category as its note.
+
+## Workspace pages
+
+- **Tasks:** Create tasks with a description, project, priority, and due date. Move them between To do, In progress, and Done using the status selector. Search by text, filter by priority, and edit or delete any task. Dated tasks are sorted by their due date.
+- **Goals:** Set a target, current amount, unit, area, and target date. Use **Update progress** to change any of these values. Reaching the target moves the goal into the Achieved view; choose All goals to see everything. Older percentage goals remain editable as a target of 100.
+- **Habits:** Each habit repeats daily. Click a date to record or undo a check-in, and use the arrows to edit earlier weeks. Streaks count consecutive days ending today or yesterday. Old undated completion flags are preserved but are not assigned invented check-in dates.
+- **Fitness:** Log a completed workout or plan a future session, with activity type, date, minutes, optional distance, and exercise notes. Edit details, change completion status, and filter the log. The movement chart includes dated, completed workouts from the last seven days.
+- **Notes:** Write multiline notes, organize them into freely named notebooks, and add comma-separated tags. Search titles, text, notebooks, and tags; pin important notes; edit or delete notes; and download a note as a text file.
+- **Analytics:** Choose a 7-, 30-, or 90-day period for habit check-ins and completed workouts. Task, goal, and finance summaries are current/all-time snapshots, labeled separately. Links take you directly to the records that need attention.
+
+Edits save automatically to PostgreSQL after **Save** or a quick action. Check the connection status above the page. If a save fails, keep the page open and use **Retry save**. Deleting an entry asks for confirmation and removes its associated history. Existing records are supported without adding sample data.
+
+### Customize the pages
+
+`src/WorkspacePages.jsx` contains the page components and a shared `fields` definition near the top. Change that definition to adjust form labels, choices, and fields. Each page has its own layout and summary calculations. `src/workspace-model.js` holds reusable date, streak, and progress calculations. Workspace styling is in `src/workspace.css`. Routes and the dashboard live in `src/App.jsx`.
+
+The database stores these fields in existing JSON records; these pages do not require a new database schema. Restart the development server if necessary, or rebuild with `npm run build` when serving the built app.
+
+### Verify the workspace
+
+With PostgreSQL running, build the app, set `AGENT_BROWSER_BIN` to an installed agent-browser executable, and run `node scripts/test-workspace.cjs`. The test creates a temporary database schema and login, exercises the browser and persistence, and removes its schema afterward. It checks editing, status changes, filters, daily history, deletion, and mobile overflow. Screenshots are saved under `.local-backups/workspace-verification/`. Your normal account and records are not modified.
