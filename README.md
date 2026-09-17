@@ -1,4 +1,4 @@
-﻿# PrinceOS
+# PrinceOS
 
 A personal dashboard for keeping track of tasks, money, routines, and plans in one place.
 
@@ -55,6 +55,8 @@ npm run dev
 
 ## A few things to know
 
+- The **Brain dump** button beside the dark-mode switch is available on the dashboard and every workspace page, and stays visible as you scroll. It turns one thought per line into editable task suggestions. It recognizes trailing today/tomorrow, weekday names (the next occurrence after today), and YYYY-MM-DD dates, plus an **Urgent:** or **High priority:** prefix. Review suggestions and click **Add tasks** to save; original lines stay in task descriptions. This runs locally with no AI API or subscription.
+- Dark mode keeps the green theme and is on by default. Use **Dark mode On/Off** on the login screen or above any page to switch. Your choice is saved in this browser.
 - Data is saved in PostgreSQL. A fresh database starts empty. Cloning the repo on another computer won't bring your records with it; use a database backup and restore to transfer them.
 - Expenses reduce spending money, not savings. Total money is the remaining spending balance plus savings.
 - Habits repeat daily. You can add or undo check-ins for today and earlier dates. Streaks count consecutive days ending today or yesterday.

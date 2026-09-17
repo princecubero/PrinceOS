@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Route, Routes, useNavigate } from 'react-router-dom';
 
-import { TasksPage, GoalsPage, HabitsPage, FitnessPage, NotesPage, AnalyticsPage } from './WorkspacePages';
+import { BrainDump, TasksPage, GoalsPage, HabitsPage, FitnessPage, NotesPage, AnalyticsPage } from './WorkspacePages';
 import { goalProgress, habitDates, localDate } from './workspace-model';
 
 const modules = [
@@ -12,6 +12,17 @@ const modules = [
 const emptyData = () => ({ events: {}, transactions: [], tasks: [], habits: [], goals: [], fitness: [], notes: [] });
 const money = value => Number(value || 0).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' });
 const dateKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+function ThemeToggle() {
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'dark');
+  const toggle = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    setTheme(next);
+    try { localStorage.setItem('princeos-theme', next); } catch { /* Theme still works without storage. */ }
+  };
+  return <div className="theme-controls"><button type="button" className="icon-button theme-toggle" onClick={toggle} aria-label="Dark mode" aria-pressed={theme === 'dark'}><span aria-hidden="true">{theme === 'dark' ? '☾' : '☀'}</span> Dark mode <span>{theme === 'dark' ? 'On' : 'Off'}</span></button></div>;
+}
 
 function LoginPage({ onLogin }) {
   const [error, setError] = useState('');
@@ -30,13 +41,16 @@ function LoginPage({ onLogin }) {
     finally { setSubmitting(false); }
   };
   return <main className="login-page"><section className="login-card" aria-labelledby="login-title">
+    <ThemeToggle />
     <div className="login-brand"><div className="brand-mark">P</div><div><strong>PrinceOS</strong><small>Your life. One system.</small></div></div>
     <div><div className="eyebrow">Private workspace</div><h1 id="login-title">Welcome back</h1><p className="login-copy">Sign in to open your dashboard.</p></div>
     <form onSubmit={submit}><label>Username<input name="username" autoComplete="username" autoCapitalize="none" required autoFocus /></label><label>Password<input name="password" type="password" autoComplete="current-password" required /></label>{error && <p className="login-error" role="alert">{error}</p>}<button className="primary-button login-submit" disabled={submitting}>{submitting ? 'Signing in…' : 'Sign in'}</button></form>
   </section></main>;
 }
 
-function Shell({ children }) {
+function Shell({ children, saveBrainDump }) {
+  const [brainDumpOpen, setBrainDumpOpen] = useState(false);
+  const [dumpNotice, setDumpNotice] = useState('');
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark">P</div><div className="brand-text">PrinceOS<small>Your life. One system.</small></div></div>
@@ -45,7 +59,18 @@ function Shell({ children }) {
       </nav></div>
       <div className="side-note"><strong>Your life, organized</strong>One calm place for what matters today.</div>
     </aside>
-    <main>{children}</main>
+    <main>
+      <div className="workspace-shortcuts">
+        {saveBrainDump && <button type="button" className="primary-button" aria-haspopup="dialog" onClick={() => { setDumpNotice(''); setBrainDumpOpen(true); }}>Brain dump</button>}
+        <ThemeToggle />
+      </div>
+      {dumpNotice && <p className="brain-dump-notice" role="status">{dumpNotice} <NavLink className="small-link" to="/tasks">View tasks</NavLink></p>}
+      {brainDumpOpen && saveBrainDump && <BrainDump close={() => setBrainDumpOpen(false)} save={drafts => {
+        saveBrainDump(drafts);
+        setDumpNotice(`${drafts.length} ${drafts.length === 1 ? 'task added' : 'tasks added'} to To do.`);
+      }} />}
+      {children}
+    </main>
   </div>;
 }
 function Header({ eyebrow = 'PrinceOS', title, subtitle, children }) {
@@ -187,7 +212,7 @@ export default function App() {
   const logout = async () => { await fetch('/api/auth/logout', { method: 'POST' }); dataRef.current = emptyData(); setData(emptyData()); setLoaded(false); setAuth({ status: 'signed-out', user: null }); };
   if (!loaded) return <Shell><Header title="Your dashboard" subtitle={databaseStatus === 'offline' ? 'Unable to load your data. Check the API and PostgreSQL, then retry.' : 'Loading your data…'} />{databaseStatus === 'offline' && <button className="primary-button" onClick={() => window.location.reload()}>Retry</button>}</Shell>;
   const collectionProps = key => ({ items: data[key], updateItems: value => update(key, value) });
-  return <Shell><div className="session-bar"><span>Signed in as {auth.user?.username}</span><button className="small-link" onClick={logout}>Sign out</button></div><div className={`database-status ${databaseStatus}`}>● {databaseStatus === 'connected' ? 'Database connected' : databaseStatus === 'offline' ? 'Save failed — changes are not saved. Keep this page open and retry.' : 'Saving changes…'}</div>{databaseStatus === 'offline' && <button className="primary-button" onClick={() => update('events', dataRef.current.events)}>Retry save</button>}<Routes>
+  return <Shell saveBrainDump={drafts => update('tasks', all => [...drafts, ...all])}><div className="session-bar"><span>Signed in as {auth.user?.username}</span><button className="small-link" onClick={logout}>Sign out</button></div><div className={`database-status ${databaseStatus}`}>● {databaseStatus === 'connected' ? 'Database connected' : databaseStatus === 'offline' ? 'Save failed — changes are not saved. Keep this page open and retry.' : 'Saving changes…'}</div>{databaseStatus === 'offline' && <button className="primary-button" onClick={() => update('events', dataRef.current.events)}>Retry save</button>}<Routes>
     <Route path="/" element={<Dashboard data={data} />} />
     <Route path="/calendar" element={<CalendarPage events={data.events} updateEvents={value => update('events', value)} />} />
     <Route path="/finance" element={<FinancePage transactions={data.transactions} updateTransactions={value => update('transactions', value)} />} />

@@ -1,4 +1,7 @@
 /* Workspace pages: shared editing controls, distinct layouts per module. */
+.brain-dump-drafts { display: grid; gap: 18px; }
+.brain-dump-draft { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+.brain-dump-draft legend { padding: 0 6px; color: var(--green); font: 13px Arial, sans-serif; }
 .workspace-tools {
   display: flex;
   align-items: center;
