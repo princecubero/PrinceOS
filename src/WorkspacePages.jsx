@@ -1,7 +1,7 @@
 import "./workspace.css";
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { organizeBrainDump } from './brain-dump.mjs';
+import BrainDumpEditor from './BrainDump';
 import {
   daysBefore,
   goalProgress,
@@ -384,75 +384,7 @@ function Meter({ value, label }) {
   );
 }
 
-export function BrainDump({ save, close }) {
-  const [text, setText] = useState('');
-  const [busy, setBusy] = useState(false);
-  const pending = useRef(null);
-  useEffect(() => () => pending.current?.abort(), []);
-  const [drafts, setDrafts] = useState(null);
-  const [error, setError] = useState('');
-  const submitted = useRef(false);
-  const change = (id, key, value) => setDrafts(all => all.map(item => item.id === id ? { ...item, [key]: value } : item));
-  const organize = event => {
-    event.preventDefault();
-    const next = organizeBrainDump(text);
-    if (!next.length || next.length > 50 || next.some(item => item.title.length > 500 || item.detail.length > 10000)) {
-      setError('Enter 1–50 thoughts, with each task title no longer than 500 characters.');
-      return;
-    }
-    setError('');
-    setDrafts(next.map(item => ({ ...item, id: crypto.randomUUID() })));
-  };
-  const organizeAI = async () => {
-    if (pending.current) return;
-    if (!text.trim() || text.length > 10000) { setError('For AI, enter 1–10,000 characters.'); return; }
-    const controller = new AbortController();
-    pending.current = controller;
-    const timeout = setTimeout(() => controller.abort(), 35000);
-    setBusy(true);
-    setError('');
-    try {
-      const response = await fetch('/api/brain-dump', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, today: localDate() }), signal: controller.signal,
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'AI is unavailable. Use Organize locally.');
-      setDrafts(result.drafts.map(item => ({ ...item, id: crypto.randomUUID() })));
-    } catch (error) {
-      setError(error.name === 'AbortError' ? 'AI request stopped. Try again or organize locally.' : error.message);
-    } finally { clearTimeout(timeout); pending.current = null; setBusy(false); }
-  };
-  return <Dialog title="Brain dump" close={close}>
-    {drafts === null ? <form onSubmit={organize}>
-      <p className="record-copy">One thought per line. End a line with today, tomorrow, a weekday, or YYYY-MM-DD to suggest a due date. Start with “Urgent:” or “High priority:” for high priority. Weekdays mean the next occurrence, starting tomorrow.</p>
-      <div className="workspace-form"><label className="wide-field">Your thoughts<textarea disabled={busy} autoFocus rows={8} maxLength={25000} required value={text} onChange={event => setText(event.target.value)} placeholder={'Buy groceries tomorrow\nFinish portfolio by Friday\nUrgent: pay internet bill today\nClean my room'} /></label></div>
-      <p className="record-copy">Organize with AI sends these thoughts to Groq to understand natural sentences. Organize locally uses one task per line.</p>
-      <p className="record-copy">Review and edit suggestions before adding them. Nothing is saved yet.</p>
-      {error && <p role="alert" className="login-error">{error}</p>}
-      <div className="form-actions"><button type="button" className="cancel" onClick={close}>Cancel</button><button disabled={busy} className="cancel">Organize locally</button><button type="button" className="primary-button" disabled={busy || !text.trim()} onClick={organizeAI}>{busy ? 'Organizing…' : 'Organize with AI'}</button></div>
-    </form> : <form onSubmit={event => {
-      event.preventDefault();
-      if (submitted.current || !drafts.length || drafts.some(item => !item.title.trim())) return;
-      submitted.current = true;
-      save(drafts.map(item => ({ ...item, title: item.title.trim(), createdDate: localDate(), updatedAt: new Date().toISOString() })));
-      close();
-    }}>
-      <p className="record-copy" role="status">{drafts.length} suggested {drafts.length === 1 ? 'task' : 'tasks'}. Check dates and priorities. Your original lines are kept in task descriptions.</p>
-      <div className="brain-dump-drafts">{drafts.map((item, index) => <fieldset className="brain-dump-draft" key={item.id}>
-        <legend>Task {index + 1}</legend>
-        <div className="workspace-form">
-          <label className="wide-field">Task title<input required maxLength={500} value={item.title} onChange={event => change(item.id, 'title', event.target.value)} /></label>
-          <label>Due date<input type="date" value={item.due} onChange={event => change(item.id, 'due', event.target.value)} /></label>
-          <label>Priority<select value={item.priority} onChange={event => change(item.id, 'priority', event.target.value)}>{['Normal', 'High', 'Low'].map(value => <option key={value}>{value}</option>)}</select></label>
-        </div>
-        <p className="record-copy">Original: {item.detail}</p>
-        <button type="button" className="small-link delete-event" aria-label={`Remove task ${index + 1}`} onClick={() => setDrafts(all => all.filter(draft => draft.id !== item.id))}>Remove</button>
-      </fieldset>)}</div>
-      <div className="form-actions"><button type="button" className="cancel" onClick={() => setDrafts(null)}>Back to thoughts</button><button className="primary-button" disabled={!drafts.length || drafts.some(item => !item.title.trim())}>Add {drafts.length} {drafts.length === 1 ? 'task' : 'tasks'}</button></div>
-    </form>}
-  </Dialog>;
-}
+export function BrainDump(props) { return <BrainDumpEditor {...props} Dialog={Dialog} />; }
 
 export function TasksPage({ items, updateItems }) {
   const records = useRecords("tasks", updateItems);

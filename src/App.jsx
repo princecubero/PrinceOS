@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Route, Routes, useNavigate } from 'react-router-dom';
 
 import { BrainDump, TasksPage, GoalsPage, HabitsPage, FitnessPage, NotesPage, AnalyticsPage } from './WorkspacePages';
+import { applySuggestions } from './brain-dump-review.mjs';
 import { goalProgress, habitDates, localDate } from './workspace-model';
 
 const modules = [
@@ -48,7 +49,7 @@ function LoginPage({ onLogin }) {
   </section></main>;
 }
 
-function Shell({ children, saveBrainDump }) {
+function Shell({ children, saveBrainDump, tasks = [] }) {
   const [brainDumpOpen, setBrainDumpOpen] = useState(false);
   const [dumpNotice, setDumpNotice] = useState('');
   return <div className="app-shell">
@@ -65,9 +66,9 @@ function Shell({ children, saveBrainDump }) {
         <ThemeToggle />
       </div>
       {dumpNotice && <p className="brain-dump-notice" role="status">{dumpNotice} <NavLink className="small-link" to="/tasks">View tasks</NavLink></p>}
-      {brainDumpOpen && saveBrainDump && <BrainDump close={() => setBrainDumpOpen(false)} save={drafts => {
+      {brainDumpOpen && saveBrainDump && <BrainDump tasks={tasks} close={() => setBrainDumpOpen(false)} save={drafts => {
         saveBrainDump(drafts);
-        setDumpNotice(`${drafts.length} ${drafts.length === 1 ? 'task added' : 'tasks added'} to To do.`);
+        setDumpNotice(`${drafts.length} suggestions applied. Check the save status below.`);
       }} />}
       {children}
     </main>
@@ -194,7 +195,7 @@ export default function App() {
   const update = (key, value) => {
     if (!loaded) return;
     const current = dataRef.current;
-    const next = { ...current, [key]: typeof value === 'function' ? value(current[key]) : value };
+    const next = key === null ? value(current) : { ...current, [key]: typeof value === 'function' ? value(current[key]) : value };
     dataRef.current = next;
     setData(next);
     setDatabaseStatus('saving');
@@ -212,7 +213,7 @@ export default function App() {
   const logout = async () => { await fetch('/api/auth/logout', { method: 'POST' }); dataRef.current = emptyData(); setData(emptyData()); setLoaded(false); setAuth({ status: 'signed-out', user: null }); };
   if (!loaded) return <Shell><Header title="Your dashboard" subtitle={databaseStatus === 'offline' ? 'Unable to load your data. Check the API and PostgreSQL, then retry.' : 'Loading your data…'} />{databaseStatus === 'offline' && <button className="primary-button" onClick={() => window.location.reload()}>Retry</button>}</Shell>;
   const collectionProps = key => ({ items: data[key], updateItems: value => update(key, value) });
-  return <Shell saveBrainDump={drafts => update('tasks', all => [...drafts, ...all])}><div className="session-bar"><span>Signed in as {auth.user?.username}</span><button className="small-link" onClick={logout}>Sign out</button></div><div className={`database-status ${databaseStatus}`}>● {databaseStatus === 'connected' ? 'Database connected' : databaseStatus === 'offline' ? 'Save failed — changes are not saved. Keep this page open and retry.' : 'Saving changes…'}</div>{databaseStatus === 'offline' && <button className="primary-button" onClick={() => update('events', dataRef.current.events)}>Retry save</button>}<Routes>
+  return <Shell tasks={data.tasks} saveBrainDump={drafts => update(null, current => applySuggestions(current, drafts, localDate()))}><div className="session-bar"><span>Signed in as {auth.user?.username}</span><button className="small-link" onClick={logout}>Sign out</button></div><div className={`database-status ${databaseStatus}`}>● {databaseStatus === 'connected' ? 'Database connected' : databaseStatus === 'offline' ? 'Save failed — changes are not saved. Keep this page open and retry.' : 'Saving changes…'}</div>{databaseStatus === 'offline' && <button className="primary-button" onClick={() => update('events', dataRef.current.events)}>Retry save</button>}<Routes>
     <Route path="/" element={<Dashboard data={data} />} />
     <Route path="/calendar" element={<CalendarPage events={data.events} updateEvents={value => update('events', value)} />} />
     <Route path="/finance" element={<FinancePage transactions={data.transactions} updateTransactions={value => update('transactions', value)} />} />

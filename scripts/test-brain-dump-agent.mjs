@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { normalizeSuggestions, requestSchema, createBrainDumpHandler } from '../brain-dump-agent.mjs';
 
-const task = { title: 'Buy milk', source: 'Buy milk tomorrow', due: '2026-09-18', priority: 'Normal' };
+const task = { title: 'Buy milk', source: 'Buy milk tomorrow', due: '2026-09-18', priority: 'Normal', type: 'task', time: '', question: '', steps: [] };
 assert.equal(normalizeSuggestions({ tasks: [task] }, task.source)[0].status, 'todo');
+assert.equal(normalizeSuggestions({ tasks: [{ ...task, question: 'Which date?' }] }, task.source)[0].due, '');
+assert.throws(() => normalizeSuggestions({ tasks: [{ ...task, time: '25:00' }] }, task.source));
 assert.throws(() => normalizeSuggestions({ tasks: [{ ...task, due: '2026-02-30' }] }, task.source));
 assert.throws(() => normalizeSuggestions({ tasks: [{ ...task, source: 'invented' }] }, task.source));
 assert.throws(() => normalizeSuggestions({ tasks: [{ ...task, priority: 'Critical' }] }, task.source));
