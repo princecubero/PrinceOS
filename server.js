@@ -51,6 +51,10 @@ async function authenticate(request, response, next) {
 
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb', type: 'application/json' }));
+const brainDumpHandler = import('./brain-dump-agent.mjs').then(module => module.createBrainDumpHandler());
+app.post('/api/brain-dump', authenticate, async (request, response, next) => {
+  try { await (await brainDumpHandler)(request, response); } catch (error) { next(error); }
+});
 app.get('/api/health', async (_request, response, next) => {
   try { await pool.query('SELECT 1'); response.json({ status: 'ok', database: 'postgresql' }); } catch (error) { next(error); }
 });

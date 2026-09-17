@@ -386,6 +386,9 @@ function Meter({ value, label }) {
 
 export function BrainDump({ save, close }) {
   const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const pending = useRef(null);
+  useEffect(() => () => pending.current?.abort(), []);
   const [drafts, setDrafts] = useState(null);
   const [error, setError] = useState('');
   const submitted = useRef(false);
@@ -400,13 +403,34 @@ export function BrainDump({ save, close }) {
     setError('');
     setDrafts(next.map(item => ({ ...item, id: crypto.randomUUID() })));
   };
+  const organizeAI = async () => {
+    if (pending.current) return;
+    if (!text.trim() || text.length > 10000) { setError('For AI, enter 1–10,000 characters.'); return; }
+    const controller = new AbortController();
+    pending.current = controller;
+    const timeout = setTimeout(() => controller.abort(), 35000);
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch('/api/brain-dump', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, today: localDate() }), signal: controller.signal,
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'AI is unavailable. Use Organize locally.');
+      setDrafts(result.drafts.map(item => ({ ...item, id: crypto.randomUUID() })));
+    } catch (error) {
+      setError(error.name === 'AbortError' ? 'AI request stopped. Try again or organize locally.' : error.message);
+    } finally { clearTimeout(timeout); pending.current = null; setBusy(false); }
+  };
   return <Dialog title="Brain dump" close={close}>
     {drafts === null ? <form onSubmit={organize}>
       <p className="record-copy">One thought per line. End a line with today, tomorrow, a weekday, or YYYY-MM-DD to suggest a due date. Start with “Urgent:” or “High priority:” for high priority. Weekdays mean the next occurrence, starting tomorrow.</p>
-      <div className="workspace-form"><label className="wide-field">Your thoughts<textarea autoFocus rows={8} maxLength={25000} required value={text} onChange={event => setText(event.target.value)} placeholder={'Buy groceries tomorrow\nFinish portfolio by Friday\nUrgent: pay internet bill today\nClean my room'} /></label></div>
+      <div className="workspace-form"><label className="wide-field">Your thoughts<textarea disabled={busy} autoFocus rows={8} maxLength={25000} required value={text} onChange={event => setText(event.target.value)} placeholder={'Buy groceries tomorrow\nFinish portfolio by Friday\nUrgent: pay internet bill today\nClean my room'} /></label></div>
+      <p className="record-copy">Organize with AI sends these thoughts to Groq to understand natural sentences. Organize locally uses one task per line.</p>
       <p className="record-copy">Review and edit suggestions before adding them. Nothing is saved yet.</p>
       {error && <p role="alert" className="login-error">{error}</p>}
-      <div className="form-actions"><button type="button" className="cancel" onClick={close}>Cancel</button><button className="primary-button">Organize thoughts</button></div>
+      <div className="form-actions"><button type="button" className="cancel" onClick={close}>Cancel</button><button disabled={busy} className="cancel">Organize locally</button><button type="button" className="primary-button" disabled={busy || !text.trim()} onClick={organizeAI}>{busy ? 'Organizing…' : 'Organize with AI'}</button></div>
     </form> : <form onSubmit={event => {
       event.preventDefault();
       if (submitted.current || !drafts.length || drafts.some(item => !item.title.trim())) return;

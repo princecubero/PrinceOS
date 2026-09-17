@@ -8,7 +8,7 @@ Built with React, Vite, Tailwind CSS, Express, and PostgreSQL. It runs locally w
 
 ## Running it locally
 
-You'll need Node.js, npm, and a running PostgreSQL server. `npm run dev` starts the app, but it doesn't start PostgreSQL.
+You'll need Node.js 22 or newer, npm, and a running PostgreSQL server. `npm run dev` starts the app, but it doesn't start PostgreSQL.
 
 Clone the repo and install the dependencies:
 
@@ -54,6 +54,8 @@ npm run dev
 ```
 
 ## A few things to know
+
+- **Organize with AI** in Brain dump uses Groq to suggest tasks from natural sentences. Add `GROQ_API_KEY` to your local `.env` and restart the server. The optional `GROQ_MODEL` defaults to `openai/gpt-oss-120b`. Only submitted thoughts and the local date are sent; review suggestions before saving. Free-tier limits apply. **Organize locally** remains available without an API key. Never commit your `.env` or share the key.
 
 - The **Brain dump** button beside the dark-mode switch is available on the dashboard and every workspace page, and stays visible as you scroll. It turns one thought per line into editable task suggestions. It recognizes trailing today/tomorrow, weekday names (the next occurrence after today), and YYYY-MM-DD dates, plus an **Urgent:** or **High priority:** prefix. Review suggestions and click **Add tasks** to save; original lines stay in task descriptions. This runs locally with no AI API or subscription.
 - Dark mode keeps the green theme and is on by default. Use **Dark mode On/Off** on the login screen or above any page to switch. Your choice is saved in this browser.
