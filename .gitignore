@@ -1,5 +1,11 @@
 node_modules/
 dist/
+public/index.html
+public/assets/
 .env
+.env.local
 npm-debug.log*
 .local-backups/
+README.md.backup-*
+.vercel/
+.supabase/

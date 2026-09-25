@@ -14,7 +14,13 @@ if (!process.env.DATABASE_URL) {
   console.error('DATABASE_URL is required. Copy .env.example to .env and update it.');
   process.exit(1);
 }
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  max: process.env.VERCEL ? 1 : 10,
+  idleTimeoutMillis: 10_000,
+  connectionTimeoutMillis: 10_000
+});
 const modules = ['events', 'transactions', 'tasks', 'habits', 'goals', 'fitness', 'notes'];
 const loginAttempts = new Map();
 
@@ -158,7 +164,12 @@ app.put('/api/state', authenticate, async (request, response, next) => {
   } finally { if (client) client.release(); }
 });
 
-const distribution = path.join(__dirname, 'dist');
+const distribution = path.join(__dirname, process.env.VERCEL ? 'public' : 'dist');
 if (fs.existsSync(distribution)) { app.use(express.static(distribution)); app.get('*', (_request, response) => response.sendFile(path.join(distribution, 'index.html'))); }
 app.use((error, _request, response, _next) => { console.error(error); response.status(500).json({ error: 'Request failed.' }); });
-initializeDatabase().then(() => app.listen(port, '127.0.0.1', () => console.log(`PrinceOS API running at http://127.0.0.1:${port}`))).catch(error => { console.error('PostgreSQL initialization failed:', error.message); process.exit(1); });
+
+if (require.main === module) {
+  initializeDatabase().then(() => app.listen(port, '127.0.0.1', () => console.log(`PrinceOS API running at http://127.0.0.1:${port}`))).catch(error => { console.error('PostgreSQL initialization failed:', error.message); process.exit(1); });
+}
+
+module.exports = app;
